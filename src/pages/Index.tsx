@@ -1,6 +1,7 @@
 import { Shield, Map, Building2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import thorLogo from "@/assets/thor-logo.png";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Index = () => {
   const navigate = useNavigate();
