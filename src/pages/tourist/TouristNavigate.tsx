@@ -30,14 +30,7 @@ const routeConfigs = [
     tag: "Fastest",
     icon: Zap,
     color: "#1e3a5f",
-    coords: [
-      [48.8566, 2.3522],
-      [48.8570, 2.3400],
-      [48.8575, 2.3280],
-      [48.8580, 2.3150],
-      [48.8582, 2.3050],
-      [48.8584, 2.2945],
-    ] as [number, number][],
+    profile: "car",
   },
   {
     id: "safest",
@@ -48,16 +41,7 @@ const routeConfigs = [
     tag: "Recommended",
     icon: ShieldCheck,
     color: "#2d8a4e",
-    coords: [
-      [48.8566, 2.3522],
-      [48.8590, 2.3480],
-      [48.8610, 2.3380],
-      [48.8625, 2.3260],
-      [48.8630, 2.3150],
-      [48.8620, 2.3050],
-      [48.8600, 2.2980],
-      [48.8584, 2.2945],
-    ] as [number, number][],
+    profile: "foot",
   },
   {
     id: "balanced",
@@ -68,15 +52,7 @@ const routeConfigs = [
     tag: "Balanced",
     icon: Scale,
     color: "#d4940a",
-    coords: [
-      [48.8566, 2.3522],
-      [48.8555, 2.3420],
-      [48.8545, 2.3300],
-      [48.8550, 2.3180],
-      [48.8560, 2.3060],
-      [48.8575, 2.2980],
-      [48.8584, 2.2945],
-    ] as [number, number][],
+    profile: "bike",
   },
 ];
 
