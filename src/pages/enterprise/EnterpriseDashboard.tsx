@@ -222,25 +222,8 @@ const EnterpriseDashboard = () => {
                       <span className="flex items-center gap-1"><span className="status-dot status-danger" /> Emergency</span>
                     </div>
                   </div>
-                  <div className="h-80 bg-muted relative">
-                    <svg viewBox="0 0 800 320" className="w-full h-full">
-                      {/* World map simplified */}
-                      <rect width="800" height="320" fill="hsl(210 20% 96%)" />
-                      {/* Continent outlines simplified */}
-                      <ellipse cx="200" cy="140" rx="80" ry="50" fill="hsl(210 20% 92%)" stroke="hsl(214 20% 88%)" />
-                      <ellipse cx="350" cy="130" rx="100" ry="70" fill="hsl(210 20% 92%)" stroke="hsl(214 20% 88%)" />
-                      <ellipse cx="550" cy="150" rx="90" ry="60" fill="hsl(210 20% 92%)" stroke="hsl(214 20% 88%)" />
-                      <ellipse cx="650" cy="220" rx="50" ry="40" fill="hsl(210 20% 92%)" stroke="hsl(214 20% 88%)" />
-                      {/* Traveler markers */}
-                      <circle cx="280" cy="120" r="6" fill="hsl(142 60% 42%)" /> {/* Paris */}
-                      <circle cx="280" cy="120" r="12" fill="hsl(142 60% 42%)" opacity="0.2" />
-                      <circle cx="500" cy="170" r="6" fill="hsl(142 60% 42%)" /> {/* Kerala */}
-                      <circle cx="600" cy="130" r="6" fill="hsl(38 92% 50%)" /> {/* Tokyo */}
-                      <circle cx="300" cy="140" r="6" fill="hsl(0 72% 51%)" /> {/* Rome */}
-                      <circle cx="300" cy="140" r="12" fill="hsl(0 72% 51%)" opacity="0.2" className="animate-pulse" />
-                      <circle cx="570" cy="210" r="6" fill="hsl(142 60% 42%)" /> {/* Bali */}
-                      <circle cx="490" cy="165" r="6" fill="hsl(142 60% 42%)" /> {/* Coimbatore */}
-                    </svg>
+                  <div className="h-80 relative">
+                    <div ref={mapRef} className="w-full h-full z-0" />
                   </div>
                 </div>
 
