@@ -97,7 +97,7 @@ const TouristNavigate = () => {
   const active = routeConfigs.find((r) => r.id === selectedRoute)!;
 
   const lightTiles = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-  const darkTiles = "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png";
+  const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
