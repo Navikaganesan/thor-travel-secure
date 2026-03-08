@@ -216,64 +216,63 @@ const EnterpriseDashboard = () => {
       </header>
 
       {/* Content */}
-      <main className="flex-1 p-6 overflow-auto">
+      <main className="flex-1 p-3 overflow-hidden">
         {activeTab === "monitoring" && (
-          <div className="space-y-6">
-            {/* Stats */}
-            <div className="grid grid-cols-4 gap-4">
+          <div className="h-full flex flex-col gap-2">
+            {/* Stats row - compact */}
+            <div className="grid grid-cols-4 gap-2 shrink-0">
               {[
                 { label: "Active Travelers", value: "2,847", icon: Users, color: "text-primary" },
                 { label: "Safe", value: "2,691", icon: Shield, color: "text-safe" },
                 { label: "Warnings", value: "142", icon: AlertTriangle, color: "text-warning" },
                 { label: "Emergencies", value: "14", icon: Phone, color: "text-destructive" },
               ].map(({ label, value, icon: Icon, color }) => (
-                <div key={label} className="bg-card border border-border rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <Icon className={`w-5 h-5 ${color}`} />
-                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{label}</span>
+                <div key={label} className="bg-card border border-border rounded-lg px-3 py-2 flex items-center gap-3">
+                  <Icon className={`w-4 h-4 ${color} shrink-0`} />
+                  <div>
+                    <p className="text-lg font-bold text-foreground leading-none">{value}</p>
+                    <span className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider">{label}</span>
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{value}</p>
                 </div>
               ))}
             </div>
 
-            {/* Map + Alerts */}
-            <div className="grid grid-cols-3 gap-6">
-              <div className="col-span-2 bg-card border border-border rounded-xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground">Live Tourist Monitoring</h3>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            {/* Main content - map + alerts side by side */}
+            <div className="grid grid-cols-4 gap-2 flex-1 min-h-0">
+              {/* Map - takes 3 cols */}
+              <div className="col-span-3 bg-card border border-border rounded-lg overflow-hidden flex flex-col">
+                <div className="px-3 py-1.5 border-b border-border flex items-center justify-between shrink-0">
+                  <h3 className="text-xs font-semibold text-foreground">Live Tourist Monitoring</h3>
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                     <span className="flex items-center gap-1"><span className="status-dot status-safe" /> Safe</span>
                     <span className="flex items-center gap-1"><span className="status-dot status-warning" /> Warning</span>
                     <span className="flex items-center gap-1"><span className="status-dot status-danger" /> Emergency</span>
                   </div>
                 </div>
-                <div className="h-80 relative">
+                <div className="flex-1 relative">
                   <div ref={mapRef} className="w-full h-full z-0" />
                 </div>
               </div>
 
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground">Emergency Alerts</h3>
-                  <span className="text-[10px] font-bold bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full">
+              {/* Right panel - alerts */}
+              <div className="col-span-1 bg-card border border-border rounded-lg overflow-hidden flex flex-col">
+                <div className="px-3 py-1.5 border-b border-border flex items-center justify-between shrink-0">
+                  <h3 className="text-xs font-semibold text-foreground">Alerts</h3>
+                  <span className="text-[9px] font-bold bg-destructive text-destructive-foreground px-1.5 py-0.5 rounded-full">
                     {alerts.length}
                   </span>
                 </div>
-                <div className="divide-y divide-border max-h-[320px] overflow-y-auto">
+                <div className="divide-y divide-border overflow-y-auto flex-1">
                   {alerts.map((alert, i) => (
-                    <div key={i} className={`px-4 py-3 ${alert.type === "sos" ? "bg-destructive/5" : ""}`}>
-                      <div className="flex items-start gap-2">
-                        <AlertTriangle className={`w-4 h-4 mt-0.5 shrink-0 ${
+                    <div key={i} className={`px-3 py-2 ${alert.type === "sos" ? "bg-destructive/5" : ""}`}>
+                      <div className="flex items-start gap-1.5">
+                        <AlertTriangle className={`w-3 h-3 mt-0.5 shrink-0 ${
                           alert.type === "sos" ? "text-destructive" : alert.type === "hazard" ? "text-warning" : "text-muted-foreground"
                         }`} />
                         <div>
-                          <p className="text-xs font-semibold text-foreground">{alert.traveler}</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">{alert.message}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] text-muted-foreground">{alert.location}</span>
-                            <span className="text-[10px] text-muted-foreground">· {alert.time}</span>
-                          </div>
+                          <p className="text-[11px] font-semibold text-foreground leading-tight">{alert.traveler}</p>
+                          <p className="text-[9px] text-muted-foreground mt-0.5 leading-tight">{alert.message}</p>
+                          <span className="text-[9px] text-muted-foreground">{alert.time}</span>
                         </div>
                       </div>
                     </div>
@@ -282,74 +281,76 @@ const EnterpriseDashboard = () => {
               </div>
             </div>
 
-            {/* Traveler Table */}
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-foreground">Traveler Status</h3>
+            {/* Bottom - compact traveler table */}
+            <div className="bg-card border border-border rounded-lg overflow-hidden shrink-0">
+              <div className="px-3 py-1.5 border-b border-border flex items-center justify-between">
+                <h3 className="text-xs font-semibold text-foreground">Traveler Status</h3>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Search travelers..."
+                    placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-3 py-1.5 text-xs bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/20"
+                    className="pl-7 pr-2 py-1 text-[11px] bg-muted border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 w-36"
                   />
                 </div>
               </div>
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Traveler ID</th>
-                    <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Name</th>
-                    <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Location</th>
-                    <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                    <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Battery</th>
-                    <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Connectivity</th>
-                    <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredTravelers.map((t) => (
-                    <tr key={t.id} className={`hover:bg-muted/30 transition ${t.status === "emergency" ? "bg-destructive/5" : ""}`}>
-                      <td className="px-4 py-3 text-xs font-mono text-muted-foreground">{t.id}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-foreground">{t.name}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground flex items-center gap-1">
-                        <MapPin className="w-3 h-3" /> {t.location}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1.5 text-xs font-medium capitalize px-2 py-0.5 rounded-full ${statusBg(t.status)} ${statusColor(t.status)}`}>
-                          <span className={`status-dot ${statusDot(t.status)}`} />
-                          {t.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          <Battery className={`w-4 h-4 ${t.battery < 20 ? "text-destructive" : t.battery < 50 ? "text-warning" : "text-safe"}`} />
-                          <span className="text-xs text-muted-foreground">{t.battery}%</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          {t.connectivity === "online" ? (
-                            <Wifi className="w-3.5 h-3.5 text-safe" />
-                          ) : t.connectivity === "weak" ? (
-                            <Wifi className="w-3.5 h-3.5 text-warning" />
-                          ) : (
-                            <WifiOff className="w-3.5 h-3.5 text-destructive" />
-                          )}
-                          <span className="text-xs text-muted-foreground capitalize">{t.connectivity}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button className="text-xs text-primary font-medium hover:underline flex items-center gap-1">
-                          <Eye className="w-3.5 h-3.5" /> View
-                        </button>
-                      </td>
+              <div className="max-h-[140px] overflow-y-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="text-left px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">ID</th>
+                      <th className="text-left px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Name</th>
+                      <th className="text-left px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Location</th>
+                      <th className="text-left px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                      <th className="text-left px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Battery</th>
+                      <th className="text-left px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Conn.</th>
+                      <th className="text-left px-3 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredTravelers.map((t) => (
+                      <tr key={t.id} className={`hover:bg-muted/30 transition ${t.status === "emergency" ? "bg-destructive/5" : ""}`}>
+                        <td className="px-3 py-1.5 text-[11px] font-mono text-muted-foreground">{t.id}</td>
+                        <td className="px-3 py-1.5 text-xs font-medium text-foreground">{t.name}</td>
+                        <td className="px-3 py-1.5 text-[11px] text-muted-foreground">
+                          <span className="flex items-center gap-1"><MapPin className="w-2.5 h-2.5" /> {t.location}</span>
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-medium capitalize px-1.5 py-0.5 rounded-full ${statusBg(t.status)} ${statusColor(t.status)}`}>
+                            <span className={`status-dot ${statusDot(t.status)}`} />
+                            {t.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <div className="flex items-center gap-1">
+                            <Battery className={`w-3 h-3 ${t.battery < 20 ? "text-destructive" : t.battery < 50 ? "text-warning" : "text-safe"}`} />
+                            <span className="text-[11px] text-muted-foreground">{t.battery}%</span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <div className="flex items-center gap-1">
+                            {t.connectivity === "online" ? (
+                              <Wifi className="w-3 h-3 text-safe" />
+                            ) : t.connectivity === "weak" ? (
+                              <Wifi className="w-3 h-3 text-warning" />
+                            ) : (
+                              <WifiOff className="w-3 h-3 text-destructive" />
+                            )}
+                            <span className="text-[11px] text-muted-foreground capitalize">{t.connectivity}</span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <button className="text-[11px] text-primary font-medium hover:underline flex items-center gap-0.5">
+                            <Eye className="w-3 h-3" /> View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
