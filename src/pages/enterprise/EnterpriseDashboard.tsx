@@ -44,8 +44,81 @@ const hazards = [
 
 const EnterpriseDashboard = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("monitoring");
   const [searchQuery, setSearchQuery] = useState("");
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+
+  const lightTiles = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+
+  useEffect(() => {
+    if (!mapRef.current || mapInstanceRef.current || activeTab !== "monitoring") return;
+
+    const map = L.map(mapRef.current, {
+      center: [25, 40],
+      zoom: 2,
+      zoomControl: true,
+      attributionControl: false,
+    });
+
+    L.tileLayer(theme === "dark" ? darkTiles : lightTiles, { maxZoom: 18 }).addTo(map);
+
+    const statusColors: Record<string, string> = {
+      safe: "#2d8a4e",
+      warning: "#d4940a",
+      emergency: "#dc2626",
+    };
+
+    travelers.forEach((t) => {
+      const color = statusColors[t.status] || "#2d8a4e";
+      const pulseClass = t.status === "emergency" ? "animation: pulse 1.5s infinite;" : "";
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="position:relative;">
+          <div style="width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);${pulseClass}"></div>
+          ${t.status === "emergency" ? `<div style="position:absolute;top:-5px;left:-5px;width:24px;height:24px;border-radius:50%;background:${color};opacity:0.25;animation:pulse 1.5s infinite;"></div>` : ""}
+        </div>`,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+
+      const batteryColor = t.battery < 20 ? "#dc2626" : t.battery < 50 ? "#d4940a" : "#2d8a4e";
+      const connIcon = t.connectivity === "online" ? "🟢" : t.connectivity === "weak" ? "🟡" : "🔴";
+
+      L.marker(t.pos, { icon })
+        .addTo(map)
+        .bindPopup(
+          `<div style="font-family:Inter,sans-serif;min-width:180px;">
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">${t.name}</div>
+            <div style="font-size:11px;color:#666;margin-bottom:3px;"><b>ID:</b> ${t.id}</div>
+            <div style="font-size:11px;color:#666;margin-bottom:3px;"><b>Location:</b> ${t.location}</div>
+            <div style="font-size:11px;margin-bottom:3px;"><b>Status:</b> <span style="color:${color};font-weight:600;text-transform:capitalize;">${t.status}</span></div>
+            <div style="font-size:11px;color:#666;margin-bottom:3px;"><b>Battery:</b> <span style="color:${batteryColor};font-weight:600;">${t.battery}%</span></div>
+            <div style="font-size:11px;color:#666;"><b>Connectivity:</b> ${connIcon} ${t.connectivity}</div>
+          </div>`,
+          { className: "enterprise-popup" }
+        );
+    });
+
+    mapInstanceRef.current = map;
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, [activeTab]);
+
+  // Update tiles on theme change
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    map.eachLayer((layer) => {
+      if (layer instanceof L.TileLayer) map.removeLayer(layer);
+    });
+    L.tileLayer(theme === "dark" ? darkTiles : lightTiles, { maxZoom: 18 }).addTo(map);
+  }, [theme]);
 
   const filteredTravelers = travelers.filter(
     (t) =>
