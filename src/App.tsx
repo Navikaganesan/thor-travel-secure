@@ -5,6 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import TouristSearch from "./pages/tourist/TouristSearch";
+import TouristNavigate from "./pages/tourist/TouristNavigate";
+import TouristSOS from "./pages/tourist/TouristSOS";
+import TouristAssistant from "./pages/tourist/TouristAssistant";
+import TouristCompanion from "./pages/tourist/TouristCompanion";
+import EnterpriseDashboard from "./pages/enterprise/EnterpriseDashboard";
 
 const queryClient = new QueryClient();
 
@@ -16,7 +22,12 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/tourist" element={<TouristSearch />} />
+          <Route path="/tourist/navigate" element={<TouristNavigate />} />
+          <Route path="/tourist/sos" element={<TouristSOS />} />
+          <Route path="/tourist/assistant" element={<TouristAssistant />} />
+          <Route path="/tourist/companion" element={<TouristCompanion />} />
+          <Route path="/enterprise" element={<EnterpriseDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
