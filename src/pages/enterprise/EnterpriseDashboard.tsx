@@ -50,7 +50,7 @@ const EnterpriseDashboard = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
 
-  const lightTiles = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const lightTiles = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
   const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
 
   useEffect(() => {

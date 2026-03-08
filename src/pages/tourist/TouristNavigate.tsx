@@ -30,14 +30,7 @@ const routeConfigs = [
     tag: "Fastest",
     icon: Zap,
     color: "#1e3a5f",
-    coords: [
-      [48.8566, 2.3522],
-      [48.8570, 2.3400],
-      [48.8575, 2.3280],
-      [48.8580, 2.3150],
-      [48.8582, 2.3050],
-      [48.8584, 2.2945],
-    ] as [number, number][],
+    profile: "car",
   },
   {
     id: "safest",
@@ -48,16 +41,7 @@ const routeConfigs = [
     tag: "Recommended",
     icon: ShieldCheck,
     color: "#2d8a4e",
-    coords: [
-      [48.8566, 2.3522],
-      [48.8590, 2.3480],
-      [48.8610, 2.3380],
-      [48.8625, 2.3260],
-      [48.8630, 2.3150],
-      [48.8620, 2.3050],
-      [48.8600, 2.2980],
-      [48.8584, 2.2945],
-    ] as [number, number][],
+    profile: "foot",
   },
   {
     id: "balanced",
@@ -68,15 +52,7 @@ const routeConfigs = [
     tag: "Balanced",
     icon: Scale,
     color: "#d4940a",
-    coords: [
-      [48.8566, 2.3522],
-      [48.8555, 2.3420],
-      [48.8545, 2.3300],
-      [48.8550, 2.3180],
-      [48.8560, 2.3060],
-      [48.8575, 2.2980],
-      [48.8584, 2.2945],
-    ] as [number, number][],
+    profile: "bike",
   },
 ];
 
@@ -93,11 +69,30 @@ const TouristNavigate = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const routeLayersRef = useRef<L.LayerGroup | null>(null);
+  const routeCoordsRef = useRef<Record<string, [number, number][]>>({});
 
   const active = routeConfigs.find((r) => r.id === selectedRoute)!;
 
-  const lightTiles = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const lightTiles = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
   const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+
+  // Fetch OSRM route
+  const fetchRoute = async (profile: string): Promise<[number, number][]> => {
+    const url = `https://router.project-osrm.org/route/v1/${profile === "foot" ? "foot" : profile === "bike" ? "bike" : "driving"}/${START[1]},${START[0]};${END[1]},${END[0]}?overview=full&geometries=geojson&alternatives=true`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.routes && data.routes.length > 0) {
+        const routeIdx = profile === "foot" ? 0 : profile === "bike" ? (data.routes.length > 1 ? 1 : 0) : 0;
+        const coords = data.routes[routeIdx].geometry.coordinates;
+        return coords.map((c: number[]) => [c[1], c[0]] as [number, number]);
+      }
+    } catch (e) {
+      console.error("OSRM fetch failed", e);
+    }
+    // Fallback straight line
+    return [START, END];
+  };
 
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
@@ -109,9 +104,7 @@ const TouristNavigate = () => {
       attributionControl: false,
     });
 
-    L.tileLayer(theme === "dark" ? darkTiles : lightTiles, {
-      maxZoom: 19,
-    }).addTo(map);
+    L.tileLayer(theme === "dark" ? darkTiles : lightTiles, { maxZoom: 19 }).addTo(map);
 
     // Start marker
     const startIcon = L.divIcon({
@@ -146,11 +139,48 @@ const TouristNavigate = () => {
     routeLayersRef.current = L.layerGroup().addTo(map);
     mapInstanceRef.current = map;
 
+    // Fetch all routes
+    Promise.all(
+      routeConfigs.map(async (rc) => {
+        const coords = await fetchRoute(rc.profile);
+        routeCoordsRef.current[rc.id] = coords;
+      })
+    ).then(() => {
+      drawRoutes();
+    });
+
     return () => {
       map.remove();
       mapInstanceRef.current = null;
     };
   }, []);
+
+  const drawRoutes = () => {
+    const group = routeLayersRef.current;
+    if (!group) return;
+    group.clearLayers();
+
+    // Draw inactive routes first (dimmed)
+    routeConfigs.forEach((route) => {
+      const coords = routeCoordsRef.current[route.id];
+      if (!coords || route.id === selectedRoute) return;
+      L.polyline(coords, {
+        color: route.color,
+        weight: 4,
+        opacity: 0.2,
+      }).addTo(group);
+    });
+
+    // Draw active route on top
+    const activeCoords = routeCoordsRef.current[selectedRoute];
+    if (activeCoords) {
+      L.polyline(activeCoords, {
+        color: active.color,
+        weight: 6,
+        opacity: 0.85,
+      }).addTo(group);
+    }
+  };
 
   // Update tile layer on theme change
   useEffect(() => {
@@ -164,28 +194,7 @@ const TouristNavigate = () => {
 
   // Update routes on selection change
   useEffect(() => {
-    const group = routeLayersRef.current;
-    if (!group) return;
-    group.clearLayers();
-
-    // Draw inactive routes first (dimmed)
-    routeConfigs.forEach((route) => {
-      if (route.id === selectedRoute) return;
-      L.polyline(route.coords, {
-        color: route.color,
-        weight: 4,
-        opacity: 0.2,
-        dashArray: "6 8",
-      }).addTo(group);
-    });
-
-    // Draw active route on top
-    L.polyline(active.coords, {
-      color: active.color,
-      weight: 6,
-      opacity: 0.85,
-      dashArray: "10 6",
-    }).addTo(group);
+    drawRoutes();
   }, [selectedRoute]);
 
   return (
