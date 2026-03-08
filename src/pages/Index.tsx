@@ -1,13 +1,17 @@
 import { Shield, Map, Building2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import thorLogo from "@/assets/thor-logo.png";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Index = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
-      {/* Logo & Branding */}
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="text-center mb-12">
         <img src={thorLogo} alt="THOR Logo" className="w-24 h-24 mx-auto mb-4" />
         <h1 className="text-4xl font-bold tracking-tight text-foreground">THOR</h1>

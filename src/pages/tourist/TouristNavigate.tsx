@@ -1,7 +1,11 @@
-import { useState } from "react";
-import { ArrowLeft, Shield, Clock, Navigation, Star, AlertTriangle, MapPin, Zap, ShieldCheck, Scale } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ArrowLeft, Shield, Clock, Zap, ShieldCheck, Scale, AlertTriangle, MapPin, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import TouristBottomNav from "@/components/tourist/TouristBottomNav";
+import ThemeToggle from "@/components/ThemeToggle";
+import { useTheme } from "@/components/ThemeProvider";
 import destParis from "@/assets/dest-paris.jpg";
 import destRome from "@/assets/dest-rome.jpg";
 import destTokyo from "@/assets/dest-tokyo.jpg";
@@ -12,47 +16,177 @@ const nearbySpots = [
   { name: "Shibuya Crossing", distance: "5.1 km", rating: 4.6, image: destTokyo },
 ];
 
-const routes = [
+// Paris coordinates
+const START: [number, number] = [48.8566, 2.3522]; // Notre-Dame area
+const END: [number, number] = [48.8584, 2.2945]; // Eiffel Tower
+
+const routeConfigs = [
   {
     id: "fastest",
     name: "Fastest Route",
-    time: "24 min",
-    distance: "8.3 km",
+    time: "12 min",
+    distance: "3.2 km",
     safety: 82,
     tag: "Fastest",
     icon: Zap,
-    path: "M 50 240 L 90 200 L 160 180 L 240 120 L 300 80 L 340 60",
-    color: "hsl(215 70% 28%)",
+    color: "#1e3a5f",
+    coords: [
+      [48.8566, 2.3522],
+      [48.8570, 2.3400],
+      [48.8575, 2.3280],
+      [48.8580, 2.3150],
+      [48.8582, 2.3050],
+      [48.8584, 2.2945],
+    ] as [number, number][],
   },
   {
     id: "safest",
     name: "Safest Route",
-    time: "31 min",
-    distance: "9.7 km",
+    time: "18 min",
+    distance: "4.1 km",
     safety: 96,
     tag: "Recommended",
     icon: ShieldCheck,
-    path: "M 50 240 L 50 190 L 80 160 L 140 150 L 180 130 L 220 100 L 280 80 L 340 60",
-    color: "hsl(142 60% 38%)",
+    color: "#2d8a4e",
+    coords: [
+      [48.8566, 2.3522],
+      [48.8590, 2.3480],
+      [48.8610, 2.3380],
+      [48.8625, 2.3260],
+      [48.8630, 2.3150],
+      [48.8620, 2.3050],
+      [48.8600, 2.2980],
+      [48.8584, 2.2945],
+    ] as [number, number][],
   },
   {
     id: "balanced",
     name: "Balanced Route",
-    time: "28 min",
-    distance: "9.1 km",
+    time: "15 min",
+    distance: "3.6 km",
     safety: 88,
     tag: "Balanced",
     icon: Scale,
-    path: "M 50 240 L 80 210 L 120 190 L 180 160 L 230 110 L 290 75 L 340 60",
-    color: "hsl(38 92% 50%)",
+    color: "#d4940a",
+    coords: [
+      [48.8566, 2.3522],
+      [48.8555, 2.3420],
+      [48.8545, 2.3300],
+      [48.8550, 2.3180],
+      [48.8560, 2.3060],
+      [48.8575, 2.2980],
+      [48.8584, 2.2945],
+    ] as [number, number][],
   },
+];
+
+const safeZones = [
+  { pos: [48.8610, 2.3380] as [number, number], name: "Safe Zone - Police" },
+  { pos: [48.8620, 2.3050] as [number, number], name: "Safe Zone - Embassy" },
+  { pos: [48.8545, 2.3300] as [number, number], name: "Safe Zone - Hospital" },
 ];
 
 const TouristNavigate = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [selectedRoute, setSelectedRoute] = useState("safest");
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const routeLayersRef = useRef<L.LayerGroup | null>(null);
 
-  const active = routes.find((r) => r.id === selectedRoute)!;
+  const active = routeConfigs.find((r) => r.id === selectedRoute)!;
+
+  const lightTiles = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+
+  useEffect(() => {
+    if (!mapRef.current || mapInstanceRef.current) return;
+
+    const map = L.map(mapRef.current, {
+      center: [48.8575, 2.3230],
+      zoom: 14,
+      zoomControl: false,
+      attributionControl: false,
+    });
+
+    L.tileLayer(theme === "dark" ? darkTiles : lightTiles, {
+      maxZoom: 19,
+    }).addTo(map);
+
+    // Start marker
+    const startIcon = L.divIcon({
+      className: "",
+      html: `<div style="width:20px;height:20px;border-radius:50%;background:#1e3a5f;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+    });
+    L.marker(START, { icon: startIcon }).addTo(map).bindPopup("Your Location");
+
+    // End marker
+    const endIcon = L.divIcon({
+      className: "",
+      html: `<div style="width:14px;height:14px;background:#dc2626;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);margin-top:-7px;"></div>`,
+      iconSize: [14, 14],
+      iconAnchor: [7, 14],
+    });
+    L.marker(END, { icon: endIcon }).addTo(map).bindPopup("Eiffel Tower");
+
+    // Safe zone circles
+    safeZones.forEach((sz) => {
+      L.circle(sz.pos, {
+        radius: 200,
+        color: "#2d8a4e",
+        fillColor: "#2d8a4e",
+        fillOpacity: 0.08,
+        weight: 1,
+        dashArray: "5 5",
+      }).addTo(map).bindPopup(sz.name);
+    });
+
+    routeLayersRef.current = L.layerGroup().addTo(map);
+    mapInstanceRef.current = map;
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, []);
+
+  // Update tile layer on theme change
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    map.eachLayer((layer) => {
+      if (layer instanceof L.TileLayer) map.removeLayer(layer);
+    });
+    L.tileLayer(theme === "dark" ? darkTiles : lightTiles, { maxZoom: 19 }).addTo(map);
+  }, [theme]);
+
+  // Update routes on selection change
+  useEffect(() => {
+    const group = routeLayersRef.current;
+    if (!group) return;
+    group.clearLayers();
+
+    // Draw inactive routes first (dimmed)
+    routeConfigs.forEach((route) => {
+      if (route.id === selectedRoute) return;
+      L.polyline(route.coords, {
+        color: route.color,
+        weight: 4,
+        opacity: 0.2,
+        dashArray: "6 8",
+      }).addTo(group);
+    });
+
+    // Draw active route on top
+    L.polyline(active.coords, {
+      color: active.color,
+      weight: 6,
+      opacity: 0.85,
+      dashArray: "10 6",
+    }).addTo(group);
+  }, [selectedRoute]);
 
   return (
     <div className="mobile-frame bg-background pb-20 relative">
@@ -65,6 +199,7 @@ const TouristNavigate = () => {
           <p className="text-sm font-semibold text-foreground">Paris, France</p>
           <p className="text-xs text-muted-foreground">Destination selected</p>
         </div>
+        <ThemeToggle />
         <div className="flex items-center gap-1.5 bg-safe/10 px-2.5 py-1 rounded-full">
           <Shield className="w-3.5 h-3.5 text-safe" />
           <span className="text-xs font-semibold text-safe">Safe</span>
@@ -73,7 +208,7 @@ const TouristNavigate = () => {
 
       {/* Route selector tabs */}
       <div className="px-3 py-2 bg-card border-b border-border flex gap-2">
-        {routes.map((route) => {
+        {routeConfigs.map((route) => {
           const Icon = route.icon;
           const isActive = selectedRoute === route.id;
           return (
@@ -93,55 +228,12 @@ const TouristNavigate = () => {
         })}
       </div>
 
-      {/* Map Area */}
-      <div className="relative h-72 bg-muted overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-primary/10" />
-        <svg viewBox="0 0 400 280" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
-          {/* Grid lines */}
-          {[0,1,2,3,4,5,6,7].map(i => (
-            <line key={`h${i}`} x1="0" y1={i*40} x2="400" y2={i*40} stroke="hsl(214 20% 88%)" strokeWidth="0.5" />
-          ))}
-          {[0,1,2,3,4,5,6,7,8,9,10].map(i => (
-            <line key={`v${i}`} x1={i*40} y1="0" x2={i*40} y2="280" stroke="hsl(214 20% 88%)" strokeWidth="0.5" />
-          ))}
-          {/* Roads */}
-          <path d="M 50 240 L 50 140 L 180 140 L 180 60 L 340 60" stroke="hsl(215 15% 82%)" strokeWidth="10" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M 50 240 L 50 190 L 80 160 L 140 150 L 180 130 L 220 100 L 280 80 L 340 60" stroke="hsl(215 15% 82%)" strokeWidth="10" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M 50 240 L 80 210 L 120 190 L 180 160 L 230 110 L 290 75 L 340 60" stroke="hsl(215 15% 82%)" strokeWidth="10" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-
-          {/* Inactive route lines (dimmed) */}
-          {routes.filter(r => r.id !== selectedRoute).map(route => (
-            <path key={route.id} d={route.path} stroke={route.color} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.2" />
-          ))}
-
-          {/* Active route line */}
-          <path d={active.path} stroke={active.color} strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="10 5">
-            <animate attributeName="stroke-dashoffset" from="30" to="0" dur="1.5s" repeatCount="indefinite" />
-          </path>
-
-          {/* Safe zone indicators */}
-          {selectedRoute === "safest" && (
-            <>
-              <circle cx="140" cy="150" r="22" fill="hsl(142 60% 42%)" opacity="0.1" stroke="hsl(142 60% 42%)" strokeWidth="1" strokeDasharray="3 3" />
-              <circle cx="220" cy="100" r="18" fill="hsl(142 60% 42%)" opacity="0.1" stroke="hsl(142 60% 42%)" strokeWidth="1" strokeDasharray="3 3" />
-              <circle cx="280" cy="80" r="20" fill="hsl(142 60% 42%)" opacity="0.1" stroke="hsl(142 60% 42%)" strokeWidth="1" strokeDasharray="3 3" />
-            </>
-          )}
-
-          {/* Current location */}
-          <circle cx="50" cy="240" r="12" fill={active.color} opacity="0.15" />
-          <circle cx="50" cy="240" r="7" fill={active.color} />
-          <circle cx="50" cy="240" r="3" fill="white" />
-
-          {/* Destination */}
-          <g transform="translate(340, 45)">
-            <path d="M 0 15 L -8 -5 Q 0 -15 8 -5 Z" fill="hsl(0 72% 51%)" />
-            <circle cx="0" cy="-5" r="4" fill="white" />
-          </g>
-        </svg>
+      {/* Leaflet Map */}
+      <div className="relative h-72">
+        <div ref={mapRef} className="w-full h-full z-0" />
 
         {/* Safety alert overlay */}
-        <div className="absolute top-3 left-3 right-3">
+        <div className="absolute top-3 left-3 right-3 z-[1000]">
           <div className="bg-card/95 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center gap-2 shadow-sm border border-border">
             <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
             <p className="text-xs text-foreground">Local protest reported nearby. Safer route available.</p>
@@ -149,7 +241,7 @@ const TouristNavigate = () => {
         </div>
 
         {/* ETA overlay */}
-        <div className="absolute bottom-3 left-3">
+        <div className="absolute bottom-3 left-3 z-[1000]">
           <div className="bg-card/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm border border-border">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
@@ -219,10 +311,7 @@ const TouristNavigate = () => {
         </div>
         <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
           {nearbySpots.map((spot) => (
-            <div
-              key={spot.name}
-              className="bg-card rounded-xl border border-border overflow-hidden min-w-[160px] shrink-0"
-            >
+            <div key={spot.name} className="bg-card rounded-xl border border-border overflow-hidden min-w-[160px] shrink-0">
               <div className="aspect-[3/2] overflow-hidden">
                 <img src={spot.image} alt={spot.name} className="w-full h-full object-cover" />
               </div>
