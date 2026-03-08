@@ -20,12 +20,12 @@ const sidebarItems = [
 ];
 
 const travelers = [
-  { id: "TRV-001", name: "Alice Martin", location: "Paris, France", status: "safe", battery: 85, connectivity: "online" },
-  { id: "TRV-002", name: "Raj Patel", location: "Kerala, India", status: "safe", battery: 62, connectivity: "online" },
-  { id: "TRV-003", name: "Yuki Tanaka", location: "Tokyo, Japan", status: "warning", battery: 23, connectivity: "weak" },
-  { id: "TRV-004", name: "Marco Rossi", location: "Rome, Italy", status: "emergency", battery: 8, connectivity: "offline" },
-  { id: "TRV-005", name: "Sarah Chen", location: "Bali, Indonesia", status: "safe", battery: 91, connectivity: "online" },
-  { id: "TRV-006", name: "James Wilson", location: "Coimbatore, India", status: "safe", battery: 74, connectivity: "online" },
+  { id: "TRV-001", name: "Alice Martin", location: "Paris, France", status: "safe", battery: 85, connectivity: "online", pos: [48.8566, 2.3522] as [number, number] },
+  { id: "TRV-002", name: "Raj Patel", location: "Kerala, India", status: "safe", battery: 62, connectivity: "online", pos: [9.9312, 76.2673] as [number, number] },
+  { id: "TRV-003", name: "Yuki Tanaka", location: "Tokyo, Japan", status: "warning", battery: 23, connectivity: "weak", pos: [35.6762, 139.6503] as [number, number] },
+  { id: "TRV-004", name: "Marco Rossi", location: "Rome, Italy", status: "emergency", battery: 8, connectivity: "offline", pos: [41.9028, 12.4964] as [number, number] },
+  { id: "TRV-005", name: "Sarah Chen", location: "Bali, Indonesia", status: "safe", battery: 91, connectivity: "online", pos: [-8.3405, 115.092] as [number, number] },
+  { id: "TRV-006", name: "James Wilson", location: "Coimbatore, India", status: "safe", battery: 74, connectivity: "online", pos: [11.0168, 76.9558] as [number, number] },
 ];
 
 const alerts = [
