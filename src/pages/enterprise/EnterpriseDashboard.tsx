@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, AlertTriangle, MapPin, Shield, Cloud, Bell, Settings, LogOut,
   Search, ChevronDown, Eye, Phone, Battery, Wifi, WifiOff, ArrowLeft,
   Map, Database, BarChart3, UserCheck, Building, Thermometer
 } from "lucide-react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import thorLogo from "@/assets/thor-logo.png";
+import { useTheme } from "@/components/ThemeProvider";
 
 const sidebarItems = [
   { icon: Users, label: "Traveler Monitoring", key: "monitoring" },
