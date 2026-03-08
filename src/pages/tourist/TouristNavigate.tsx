@@ -1,4 +1,5 @@
-import { ArrowLeft, Shield, Clock, Navigation, Star, ChevronRight, AlertTriangle, MapPin } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Shield, Clock, Navigation, Star, AlertTriangle, MapPin, Zap, ShieldCheck, Scale } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import TouristBottomNav from "@/components/tourist/TouristBottomNav";
 import destParis from "@/assets/dest-paris.jpg";
@@ -12,13 +13,46 @@ const nearbySpots = [
 ];
 
 const routes = [
-  { name: "Fastest Route", time: "24 min", distance: "8.3 km", safety: 82, tag: "Fastest" },
-  { name: "Safest Route", time: "31 min", distance: "9.7 km", safety: 96, tag: "Recommended" },
-  { name: "Scenic Route", time: "38 min", distance: "11.2 km", safety: 88, tag: "Scenic" },
+  {
+    id: "fastest",
+    name: "Fastest Route",
+    time: "24 min",
+    distance: "8.3 km",
+    safety: 82,
+    tag: "Fastest",
+    icon: Zap,
+    path: "M 50 240 L 90 200 L 160 180 L 240 120 L 300 80 L 340 60",
+    color: "hsl(215 70% 28%)",
+  },
+  {
+    id: "safest",
+    name: "Safest Route",
+    time: "31 min",
+    distance: "9.7 km",
+    safety: 96,
+    tag: "Recommended",
+    icon: ShieldCheck,
+    path: "M 50 240 L 50 190 L 80 160 L 140 150 L 180 130 L 220 100 L 280 80 L 340 60",
+    color: "hsl(142 60% 38%)",
+  },
+  {
+    id: "balanced",
+    name: "Balanced Route",
+    time: "28 min",
+    distance: "9.1 km",
+    safety: 88,
+    tag: "Balanced",
+    icon: Scale,
+    path: "M 50 240 L 80 210 L 120 190 L 180 160 L 230 110 L 290 75 L 340 60",
+    color: "hsl(38 92% 50%)",
+  },
 ];
 
 const TouristNavigate = () => {
   const navigate = useNavigate();
+  const [selectedRoute, setSelectedRoute] = useState("safest");
+
+  const active = routes.find((r) => r.id === selectedRoute)!;
 
   return (
     <div className="mobile-frame bg-background pb-20 relative">
@@ -37,10 +71,31 @@ const TouristNavigate = () => {
         </div>
       </div>
 
+      {/* Route selector tabs */}
+      <div className="px-3 py-2 bg-card border-b border-border flex gap-2">
+        {routes.map((route) => {
+          const Icon = route.icon;
+          const isActive = selectedRoute === route.id;
+          return (
+            <button
+              key={route.id}
+              onClick={() => setSelectedRoute(route.id)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {route.tag}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Map Area */}
       <div className="relative h-72 bg-muted overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-primary/10" />
-        {/* Simulated map with route */}
         <svg viewBox="0 0 400 280" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
           {/* Grid lines */}
           {[0,1,2,3,4,5,6,7].map(i => (
@@ -50,22 +105,39 @@ const TouristNavigate = () => {
             <line key={`v${i}`} x1={i*40} y1="0" x2={i*40} y2="280" stroke="hsl(214 20% 88%)" strokeWidth="0.5" />
           ))}
           {/* Roads */}
-          <path d="M 50 240 L 50 140 L 180 140 L 180 60 L 340 60" stroke="hsl(215 15% 75%)" strokeWidth="8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M 50 240 L 120 240 L 120 180 L 260 180 L 260 100 L 340 60" stroke="hsl(215 15% 75%)" strokeWidth="8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          {/* Route line */}
-          <path d="M 50 240 L 50 140 L 180 140 L 180 60 L 340 60" stroke="hsl(215 70% 28%)" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="8 4" />
+          <path d="M 50 240 L 50 140 L 180 140 L 180 60 L 340 60" stroke="hsl(215 15% 82%)" strokeWidth="10" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M 50 240 L 50 190 L 80 160 L 140 150 L 180 130 L 220 100 L 280 80 L 340 60" stroke="hsl(215 15% 82%)" strokeWidth="10" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M 50 240 L 80 210 L 120 190 L 180 160 L 230 110 L 290 75 L 340 60" stroke="hsl(215 15% 82%)" strokeWidth="10" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+
+          {/* Inactive route lines (dimmed) */}
+          {routes.filter(r => r.id !== selectedRoute).map(route => (
+            <path key={route.id} d={route.path} stroke={route.color} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.2" />
+          ))}
+
+          {/* Active route line */}
+          <path d={active.path} stroke={active.color} strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="10 5">
+            <animate attributeName="stroke-dashoffset" from="30" to="0" dur="1.5s" repeatCount="indefinite" />
+          </path>
+
+          {/* Safe zone indicators */}
+          {selectedRoute === "safest" && (
+            <>
+              <circle cx="140" cy="150" r="22" fill="hsl(142 60% 42%)" opacity="0.1" stroke="hsl(142 60% 42%)" strokeWidth="1" strokeDasharray="3 3" />
+              <circle cx="220" cy="100" r="18" fill="hsl(142 60% 42%)" opacity="0.1" stroke="hsl(142 60% 42%)" strokeWidth="1" strokeDasharray="3 3" />
+              <circle cx="280" cy="80" r="20" fill="hsl(142 60% 42%)" opacity="0.1" stroke="hsl(142 60% 42%)" strokeWidth="1" strokeDasharray="3 3" />
+            </>
+          )}
+
           {/* Current location */}
-          <circle cx="50" cy="240" r="10" fill="hsl(215 70% 28%)" opacity="0.2" />
-          <circle cx="50" cy="240" r="6" fill="hsl(215 70% 28%)" />
+          <circle cx="50" cy="240" r="12" fill={active.color} opacity="0.15" />
+          <circle cx="50" cy="240" r="7" fill={active.color} />
           <circle cx="50" cy="240" r="3" fill="white" />
+
           {/* Destination */}
           <g transform="translate(340, 45)">
             <path d="M 0 15 L -8 -5 Q 0 -15 8 -5 Z" fill="hsl(0 72% 51%)" />
             <circle cx="0" cy="-5" r="4" fill="white" />
           </g>
-          {/* Safe zone indicators */}
-          <circle cx="150" cy="100" r="20" fill="hsl(142 60% 42%)" opacity="0.1" stroke="hsl(142 60% 42%)" strokeWidth="1" strokeDasharray="3 3" />
-          <circle cx="280" cy="150" r="25" fill="hsl(142 60% 42%)" opacity="0.1" stroke="hsl(142 60% 42%)" strokeWidth="1" strokeDasharray="3 3" />
         </svg>
 
         {/* Safety alert overlay */}
@@ -75,52 +147,67 @@ const TouristNavigate = () => {
             <p className="text-xs text-foreground">Local protest reported nearby. Safer route available.</p>
           </div>
         </div>
+
+        {/* ETA overlay */}
+        <div className="absolute bottom-3 left-3">
+          <div className="bg-card/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm border border-border">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-primary" />
+                <span className="text-sm font-bold text-foreground">{active.time}</span>
+              </div>
+              <div className="w-px h-4 bg-border" />
+              <span className="text-xs text-muted-foreground">{active.distance}</span>
+              <div className="w-px h-4 bg-border" />
+              <span className={`text-xs font-bold ${active.safety >= 90 ? "text-safe" : active.safety >= 80 ? "text-warning" : "text-destructive"}`}>
+                {active.safety}% safe
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Route Options */}
-      <div className="px-4 py-4">
-        <h3 className="text-sm font-semibold text-foreground mb-3">Route Options</h3>
-        <div className="space-y-2">
-          {routes.map((route, i) => (
-            <button
-              key={route.name}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl border transition ${
-                i === 1
-                  ? "border-primary bg-primary/5"
-                  : "border-border bg-card hover:border-primary/20"
-              }`}
-            >
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                i === 1 ? "thor-gradient" : "bg-muted"
+      {/* Route Details Card */}
+      <div className="px-4 py-3">
+        <div className="bg-card rounded-xl border border-border p-3">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+              selectedRoute === "safest" ? "bg-safe/15" : selectedRoute === "fastest" ? "thor-gradient" : "bg-accent/15"
+            }`}>
+              <active.icon className={`w-5 h-5 ${
+                selectedRoute === "safest" ? "text-safe" : selectedRoute === "fastest" ? "text-primary-foreground" : "text-accent-foreground"
+              }`} />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-foreground">{active.name}</p>
+                <span className="text-[10px] font-semibold text-primary-foreground bg-primary px-1.5 py-0.5 rounded">
+                  {active.tag}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 mt-0.5">
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> {active.time}
+                </span>
+                <span className="text-xs text-muted-foreground">{active.distance}</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className={`text-lg font-bold ${
+                active.safety >= 90 ? "text-safe" : active.safety >= 80 ? "text-warning" : "text-destructive"
               }`}>
-                <Navigation className={`w-5 h-5 ${i === 1 ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                {active.safety}%
               </div>
-              <div className="flex-1 text-left">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-foreground">{route.name}</p>
-                  {i === 1 && (
-                    <span className="text-[10px] font-semibold text-primary-foreground bg-primary px-1.5 py-0.5 rounded">
-                      {route.tag}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 mt-0.5">
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {route.time}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{route.distance}</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className={`text-sm font-bold ${
-                  route.safety >= 90 ? "text-safe" : route.safety >= 80 ? "text-warning" : "text-destructive"
-                }`}>
-                  {route.safety}%
-                </div>
-                <p className="text-[10px] text-muted-foreground">Safety</p>
-              </div>
-            </button>
-          ))}
+              <p className="text-[10px] text-muted-foreground">Safety</p>
+            </div>
+          </div>
+          {selectedRoute === "safest" && (
+            <div className="mt-2 pt-2 border-t border-border flex flex-wrap gap-1.5">
+              {["Well-lit streets", "Populated areas", "Safe zones"].map(tag => (
+                <span key={tag} className="text-[10px] bg-safe/10 text-safe font-medium px-2 py-0.5 rounded-full">{tag}</span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
