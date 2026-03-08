@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, AlertTriangle, MapPin, Shield, Cloud, Bell, Settings, LogOut,
   Search, ChevronDown, Eye, Phone, Battery, Wifi, WifiOff, ArrowLeft,
   Map, Database, BarChart3, UserCheck, Building, Thermometer
 } from "lucide-react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import thorLogo from "@/assets/thor-logo.png";
+import { useTheme } from "@/components/ThemeProvider";
 
 const sidebarItems = [
   { icon: Users, label: "Traveler Monitoring", key: "monitoring" },
@@ -17,12 +20,12 @@ const sidebarItems = [
 ];
 
 const travelers = [
-  { id: "TRV-001", name: "Alice Martin", location: "Paris, France", status: "safe", battery: 85, connectivity: "online" },
-  { id: "TRV-002", name: "Raj Patel", location: "Kerala, India", status: "safe", battery: 62, connectivity: "online" },
-  { id: "TRV-003", name: "Yuki Tanaka", location: "Tokyo, Japan", status: "warning", battery: 23, connectivity: "weak" },
-  { id: "TRV-004", name: "Marco Rossi", location: "Rome, Italy", status: "emergency", battery: 8, connectivity: "offline" },
-  { id: "TRV-005", name: "Sarah Chen", location: "Bali, Indonesia", status: "safe", battery: 91, connectivity: "online" },
-  { id: "TRV-006", name: "James Wilson", location: "Coimbatore, India", status: "safe", battery: 74, connectivity: "online" },
+  { id: "TRV-001", name: "Alice Martin", location: "Paris, France", status: "safe", battery: 85, connectivity: "online", pos: [48.8566, 2.3522] as [number, number] },
+  { id: "TRV-002", name: "Raj Patel", location: "Kerala, India", status: "safe", battery: 62, connectivity: "online", pos: [9.9312, 76.2673] as [number, number] },
+  { id: "TRV-003", name: "Yuki Tanaka", location: "Tokyo, Japan", status: "warning", battery: 23, connectivity: "weak", pos: [35.6762, 139.6503] as [number, number] },
+  { id: "TRV-004", name: "Marco Rossi", location: "Rome, Italy", status: "emergency", battery: 8, connectivity: "offline", pos: [41.9028, 12.4964] as [number, number] },
+  { id: "TRV-005", name: "Sarah Chen", location: "Bali, Indonesia", status: "safe", battery: 91, connectivity: "online", pos: [-8.3405, 115.092] as [number, number] },
+  { id: "TRV-006", name: "James Wilson", location: "Coimbatore, India", status: "safe", battery: 74, connectivity: "online", pos: [11.0168, 76.9558] as [number, number] },
 ];
 
 const alerts = [
@@ -41,8 +44,81 @@ const hazards = [
 
 const EnterpriseDashboard = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("monitoring");
   const [searchQuery, setSearchQuery] = useState("");
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+
+  const lightTiles = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const darkTiles = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+
+  useEffect(() => {
+    if (!mapRef.current || mapInstanceRef.current || activeTab !== "monitoring") return;
+
+    const map = L.map(mapRef.current, {
+      center: [25, 40],
+      zoom: 2,
+      zoomControl: true,
+      attributionControl: false,
+    });
+
+    L.tileLayer(theme === "dark" ? darkTiles : lightTiles, { maxZoom: 18 }).addTo(map);
+
+    const statusColors: Record<string, string> = {
+      safe: "#2d8a4e",
+      warning: "#d4940a",
+      emergency: "#dc2626",
+    };
+
+    travelers.forEach((t) => {
+      const color = statusColors[t.status] || "#2d8a4e";
+      const pulseClass = t.status === "emergency" ? "animation: pulse 1.5s infinite;" : "";
+      const icon = L.divIcon({
+        className: "",
+        html: `<div style="position:relative;">
+          <div style="width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);${pulseClass}"></div>
+          ${t.status === "emergency" ? `<div style="position:absolute;top:-5px;left:-5px;width:24px;height:24px;border-radius:50%;background:${color};opacity:0.25;animation:pulse 1.5s infinite;"></div>` : ""}
+        </div>`,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+
+      const batteryColor = t.battery < 20 ? "#dc2626" : t.battery < 50 ? "#d4940a" : "#2d8a4e";
+      const connIcon = t.connectivity === "online" ? "🟢" : t.connectivity === "weak" ? "🟡" : "🔴";
+
+      L.marker(t.pos, { icon })
+        .addTo(map)
+        .bindPopup(
+          `<div style="font-family:Inter,sans-serif;min-width:180px;">
+            <div style="font-weight:700;font-size:13px;margin-bottom:6px;">${t.name}</div>
+            <div style="font-size:11px;color:#666;margin-bottom:3px;"><b>ID:</b> ${t.id}</div>
+            <div style="font-size:11px;color:#666;margin-bottom:3px;"><b>Location:</b> ${t.location}</div>
+            <div style="font-size:11px;margin-bottom:3px;"><b>Status:</b> <span style="color:${color};font-weight:600;text-transform:capitalize;">${t.status}</span></div>
+            <div style="font-size:11px;color:#666;margin-bottom:3px;"><b>Battery:</b> <span style="color:${batteryColor};font-weight:600;">${t.battery}%</span></div>
+            <div style="font-size:11px;color:#666;"><b>Connectivity:</b> ${connIcon} ${t.connectivity}</div>
+          </div>`,
+          { className: "enterprise-popup" }
+        );
+    });
+
+    mapInstanceRef.current = map;
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, [activeTab]);
+
+  // Update tiles on theme change
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    map.eachLayer((layer) => {
+      if (layer instanceof L.TileLayer) map.removeLayer(layer);
+    });
+    L.tileLayer(theme === "dark" ? darkTiles : lightTiles, { maxZoom: 18 }).addTo(map);
+  }, [theme]);
 
   const filteredTravelers = travelers.filter(
     (t) =>
@@ -146,25 +222,8 @@ const EnterpriseDashboard = () => {
                       <span className="flex items-center gap-1"><span className="status-dot status-danger" /> Emergency</span>
                     </div>
                   </div>
-                  <div className="h-80 bg-muted relative">
-                    <svg viewBox="0 0 800 320" className="w-full h-full">
-                      {/* World map simplified */}
-                      <rect width="800" height="320" fill="hsl(210 20% 96%)" />
-                      {/* Continent outlines simplified */}
-                      <ellipse cx="200" cy="140" rx="80" ry="50" fill="hsl(210 20% 92%)" stroke="hsl(214 20% 88%)" />
-                      <ellipse cx="350" cy="130" rx="100" ry="70" fill="hsl(210 20% 92%)" stroke="hsl(214 20% 88%)" />
-                      <ellipse cx="550" cy="150" rx="90" ry="60" fill="hsl(210 20% 92%)" stroke="hsl(214 20% 88%)" />
-                      <ellipse cx="650" cy="220" rx="50" ry="40" fill="hsl(210 20% 92%)" stroke="hsl(214 20% 88%)" />
-                      {/* Traveler markers */}
-                      <circle cx="280" cy="120" r="6" fill="hsl(142 60% 42%)" /> {/* Paris */}
-                      <circle cx="280" cy="120" r="12" fill="hsl(142 60% 42%)" opacity="0.2" />
-                      <circle cx="500" cy="170" r="6" fill="hsl(142 60% 42%)" /> {/* Kerala */}
-                      <circle cx="600" cy="130" r="6" fill="hsl(38 92% 50%)" /> {/* Tokyo */}
-                      <circle cx="300" cy="140" r="6" fill="hsl(0 72% 51%)" /> {/* Rome */}
-                      <circle cx="300" cy="140" r="12" fill="hsl(0 72% 51%)" opacity="0.2" className="animate-pulse" />
-                      <circle cx="570" cy="210" r="6" fill="hsl(142 60% 42%)" /> {/* Bali */}
-                      <circle cx="490" cy="165" r="6" fill="hsl(142 60% 42%)" /> {/* Coimbatore */}
-                    </svg>
+                  <div className="h-80 relative">
+                    <div ref={mapRef} className="w-full h-full z-0" />
                   </div>
                 </div>
 
